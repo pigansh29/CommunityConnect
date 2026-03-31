@@ -29,6 +29,13 @@ const Community = () => {
             }
         };
         fetchData();
+
+        // Implement short-polling to fetch new complaints every 10 seconds 
+        // This simulates a real-time feed across multiple devices silently.
+        const intervalId = setInterval(fetchData, 10000);
+
+        // Cleanup the interval when the component unmounts to prevent memory leaks
+        return () => clearInterval(intervalId);
     }, []);
 
     return (
