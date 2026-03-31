@@ -20,11 +20,12 @@ const LocationMarker = ({ setLocation, isFetchingAddress }) => {
 
             try {
                 isFetchingAddress(true);
-                // Call OpenStreetMap Nominatim API for reverse geocoding
-                const response = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+                // Call OpenStreetMap Nominatim API for reverse geocoding using fetch to avoid axios JWT headers
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+                const data = await response.json();
                 
                 // Extract best available name
-                const address = response.data.address;
+                const address = data.address;
                 let areaName = "Unknown Location";
                 
                 if (address) {
@@ -86,10 +87,11 @@ const ReportIncident = () => {
         setError('');
         
         try {
-            const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}`);
+            const data = await response.json();
             
-            if (response.data && response.data.length > 0) {
-                const result = response.data[0];
+            if (data && data.length > 0) {
+                const result = data[0];
                 const lat = parseFloat(result.lat);
                 const lng = parseFloat(result.lon);
                 
