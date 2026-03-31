@@ -13,7 +13,7 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 exports.registerUser = async (req, res) => {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body; // Removed 'role' extraction for security
 
     try {
         let user = await User.findOne({ email });
@@ -26,7 +26,7 @@ exports.registerUser = async (req, res) => {
             name,
             email,
             password,
-            role: role || 'student', // Default to student
+            role: 'student', // FORCE all new signups to 'student' to prevent privilege escalation
         });
 
         await user.save();
