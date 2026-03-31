@@ -13,7 +13,13 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 exports.registerUser = async (req, res) => {
-    const { name, email, password } = req.body; // Removed 'role' extraction for security
+    const { name, email, password, role } = req.body; 
+
+    // Secure Role Assignment: Only allow standard user types during open registration
+    let assignedRole = 'student'; // Absolute default
+    if (['student', 'faculty', 'staff'].includes(role)) {
+        assignedRole = role;
+    }
 
     try {
         let user = await User.findOne({ email });
@@ -26,7 +32,7 @@ exports.registerUser = async (req, res) => {
             name,
             email,
             password,
-            role: 'student', // FORCE all new signups to 'student' to prevent privilege escalation
+            role: assignedRole, 
         });
 
         await user.save();

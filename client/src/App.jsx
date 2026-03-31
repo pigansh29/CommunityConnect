@@ -8,6 +8,18 @@ import Dashboard from './pages/Dashboard';
 import ReportIncident from './pages/ReportIncident';
 import Community from './pages/Community';
 import PrivateRoute from './components/PrivateRoute';
+import L from 'leaflet';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix for React-Leaflet marker icons in production (Vite bundles assets with hashes, breaking Leaflet's relative CSS paths)
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 
 function App() {
   return (
