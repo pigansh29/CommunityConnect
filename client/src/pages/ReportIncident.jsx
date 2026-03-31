@@ -13,7 +13,7 @@ const LocationMarker = ({ setLocation, isFetchingAddress }) => {
             setPosition(e.latlng);
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
-            
+
             // Set initial location state before fetching address
             setLocation({ lat, lng, areaName: "Fetching address..." });
             map.flyTo(e.latlng, map.getZoom());
@@ -23,15 +23,15 @@ const LocationMarker = ({ setLocation, isFetchingAddress }) => {
                 // Call OpenStreetMap Nominatim API for reverse geocoding using fetch to avoid axios JWT headers
                 const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
                 const data = await response.json();
-                
+
                 // Extract best available name
                 const address = data.address;
                 let areaName = "Unknown Location";
-                
+
                 if (address) {
                     areaName = address.road || address.suburb || address.neighbourhood || address.city_district || address.city || address.town || address.village || address.state || "Selected Location";
                 }
-                
+
                 setLocation({ lat, lng, areaName });
             } catch (error) {
                 console.error("Error reverse geocoding location:", error);
@@ -59,7 +59,7 @@ const ReportIncident = () => {
     const [isAnonymous, setIsAnonymous] = useState(false);
     const [location, setLocation] = useState(null);
     const [media, setMedia] = useState(''); // Simple URL input for now
-    
+
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -73,7 +73,7 @@ const ReportIncident = () => {
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [isFetchingAddress, setIsFetchingAddress] = useState(false);
-    
+
     // Map Search State
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
@@ -85,16 +85,16 @@ const ReportIncident = () => {
 
         setIsSearching(true);
         setError('');
-        
+
         try {
             const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
-            
+
             if (data && data.length > 0) {
                 const result = data[0];
                 const lat = parseFloat(result.lat);
                 const lng = parseFloat(result.lon);
-                
+
                 // Update location state with the found location
                 setLocation({
                     lat,
@@ -264,9 +264,8 @@ const ReportIncident = () => {
                         <button
                             type="submit"
                             disabled={isSearching}
-                            className={`px-4 py-1.5 rounded-md shadow-sm text-sm font-medium text-white ${
-                                isSearching ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition`}
+                            className={`px-4 py-1.5 rounded-md shadow-sm text-sm font-medium text-white ${isSearching ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition`}
                         >
                             {isSearching ? 'Search' : 'Search Map'}
                         </button>
@@ -283,9 +282,9 @@ const ReportIncident = () => {
                             )}
                             <span className="truncate">{location ? location.areaName : "Click map or search a location"}</span>
                         </p>
-                        <MapContainer 
-                            center={[28.6139, 77.2090]} 
-                            zoom={13} 
+                        <MapContainer
+                            center={[28.6139, 77.2090]}
+                            zoom={13}
                             style={{ height: '100%', width: '100%' }}
                             ref={mapRef}
                         >
@@ -294,7 +293,7 @@ const ReportIncident = () => {
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                             />
                             <LocationMarker setLocation={setLocation} isFetchingAddress={setIsFetchingAddress} />
-                            
+
                             {location && !isFetchingAddress && (
                                 <Marker position={[location.lat, location.lng]} />
                             )}
