@@ -33,7 +33,9 @@ const Community = () => {
 
         // Connect to Socket.IO for true real-time, cross-device updates (bypassing caching entirely)
         const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin;
-        const socket = io(socketUrl);
+        const socket = io(socketUrl, {
+            transports: ['websocket'] // Force native WebSockets to bypass Render proxy caching issues
+        });
 
         socket.on('connect', () => {
             console.log('Connected to real-time incident feed');
