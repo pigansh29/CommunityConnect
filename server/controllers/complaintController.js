@@ -68,6 +68,11 @@ exports.createComplaint = async (req, res) => {
 
         const complaint = await Complaint.create(complaintData);
 
+        // Emit the newly created complaint to all connected websocket clients!
+        if (req.io) {
+            req.io.emit('newIncident', complaint);
+        }
+
         res.status(201).json(complaint);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import { io } from 'socket.io-client';
 import { AlertTriangle, MapPin, Activity, ShieldAlert, Navigation2, CheckCircle2 } from 'lucide-react';
 
 const Community = () => {
@@ -30,12 +31,24 @@ const Community = () => {
         };
         fetchData();
 
-        // Implement short-polling to fetch new complaints every 10 seconds 
-        // This simulates a real-time feed across multiple devices silently.
-        const intervalId = setInterval(fetchData, 10000);
+        // Connect to Socket.IO for true real-time, cross-device updates (bypassing caching entirely)
+        const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin;
+        const socket = io(socketUrl);
 
-        // Cleanup the interval when the component unmounts to prevent memory leaks
-        return () => clearInterval(intervalId);
+        socket.on('connect', () => {
+            console.log('Connected to real-time incident feed');
+        });
+
+        // Listen for new incidents pushed instantly from the backend
+        socket.on('newIncident', () => {
+            // Hot-reload the arrays immediately when anyone anywhere submits a complaint
+            fetchData();
+        });
+
+        // Cleanup the socket connection when the user leaves the page to prevent memory leaks
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     return (

@@ -4,11 +4,30 @@ const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Create HTTP server to attach Socket.IO
+const server = http.createServer(app);
+
+// Initialize Socket.IO with CORS
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Allow all origins for the websocket
+        methods: ["GET", "POST", "PATCH"]
+    }
+});
+
+// Inject io instance into every request object
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
 
 // Middleware
 app.use(express.json());
@@ -56,6 +75,14 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch(err => console.error('MongoDB Connection Error:', err));
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Socket connection listener
+io.on('connection', (socket) => {
+    console.log('A client connected via WebSocket:', socket.id);
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+    });
+});
+
+server.listen(PORT, () => {
+    console.log(`Server & WebSocket running on port ${PORT}`);
 });
