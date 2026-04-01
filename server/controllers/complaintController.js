@@ -107,6 +107,12 @@ exports.getComplaints = async (req, res) => {
         const complaints = await Complaint.find(query)
             .populate('user', 'name email')
             .sort({ createdAt: -1 });
+
+        // Force browsers and proxies (like Render) to never cache this API response
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+
         res.json(complaints);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
