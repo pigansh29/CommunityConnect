@@ -40,9 +40,19 @@ const Community = () => {
         });
 
         // Listen for new incidents pushed instantly from the backend
-        socket.on('newIncident', () => {
-            // Hot-reload the arrays immediately when anyone anywhere submits a complaint
-            fetchData();
+        socket.on('newIncident', (incident) => {
+            console.log("Real-time live incident received from socket pipeline:", incident);
+            
+            // 1. Instantly drop the new map pin without talking to the database
+            setBlackSpots(prev => [incident, ...prev]);
+
+            // 2. Instantly push to the Live Feed if it is a severe incident
+            if (['Violence', 'Harassment', 'Theft'].includes(incident.incidentType)) {
+                setAlerts(prev => {
+                    const newAlerts = [incident, ...prev];
+                    return newAlerts.slice(0, 5); // Keep only top 5 recent
+                });
+            }
         });
 
         // Cleanup the socket connection when the user leaves the page to prevent memory leaks
