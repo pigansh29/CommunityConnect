@@ -14,8 +14,8 @@ const Community = () => {
         const fetchData = async () => {
             try {
                 // In a real app, these would be separate endpoints. 
-                // For now, using complaints as a proxy for both alerts and blackspots
-                const res = await axios.get('/api/complaints');
+                // Using a unique timestamp to fully guarantee Render proxy/browser refuses to cache this GET request
+                const res = await axios.get(`/api/complaints?t=${new Date().getTime()}`);
 
                 // Filter for "severe" types for alerts
                 const severe = res.data.filter(c => ['Violence', 'Harassment', 'Theft'].includes(c.incidentType));

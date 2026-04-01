@@ -69,8 +69,9 @@ exports.createComplaint = async (req, res) => {
         const complaint = await Complaint.create(complaintData);
 
         // Emit the newly created complaint to all connected websocket clients!
+        // IMPORTANT: Must use .toObject() so Socket.IO doesn't crash parsing a circular Mongoose Document
         if (req.io) {
-            req.io.emit('newIncident', complaint);
+            req.io.emit('newIncident', complaint.toObject());
         }
 
         res.status(201).json(complaint);
