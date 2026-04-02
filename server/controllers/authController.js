@@ -25,7 +25,45 @@ exports.registerUser = async (req, res) => {
         let user = await User.findOne({ email });
 
         if (user) {
-            return res.status(400).json({ message: 'User already exists' });
+            if (user.isVerified) {
+                return res.status(400).json({ message: 'User already exists' });
+            } else {
+                // Resend verification code if user is not verified yet
+                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                user.verificationToken = otp;
+                user.verificationTokenExpires = new Date(Date.now() + 10 * 60 * 1000);
+                
+                // Update name, password, and role in case they changed it while trying again
+                user.name = name;
+                user.password = password; 
+                user.role = assignedRole;
+                
+                await user.save();
+
+                try {
+                    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+                        const sendEmail = require('../utils/sendEmail');
+                        await sendEmail({
+                            email: user.email,
+                            subject: 'Community Connect - Verification Code',
+                            message: `Welcome back to Community Connect! Your email verification code is: ${otp}\nThis code will expire in 10 minutes.`
+                        });
+                        console.log(`[MAIL] Email sent to ${email}`);
+                    } else {
+                        console.log(`\n\n======================================`);
+                        console.log(`[MAIL MOCK] OTP for ${email}: ${otp}\n(Add EMAIL_USER and EMAIL_PASS to .env to send real emails)`);
+                        console.log(`======================================\n\n`);
+                    }
+                } catch (err) {
+                    console.error('Email sending failed:', err);
+                }
+
+                return res.status(200).json({
+                    message: 'Registration restarted! Please verify your email.',
+                    email: user.email,
+                    requiresVerification: true
+                });
+            }
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
