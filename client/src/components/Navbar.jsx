@@ -35,7 +35,7 @@ const Navbar = () => {
                                 <Shield className="h-6 w-6 text-white" />
                             </div>
                             <span className="font-extrabold text-2xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 group-hover:from-blue-300 group-hover:to-purple-300 transition-colors">
-                                CampusConnect
+                                CommunityConnect
                             </span>
                         </Link>
                     </div>

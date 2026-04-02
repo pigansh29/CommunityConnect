@@ -23,7 +23,7 @@ const Home = () => {
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Together.</span>
                     </h1>
                     <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up animation-delay-200 font-medium">
-                        CampusConnect is a proactive community-based reporting platform designed to detect black spots, prevent mishaps, and ensure a secure environment for everyone.
+                        CommunityConnect is a proactive community-based reporting platform designed to detect black spots, prevent mishaps, and ensure a secure environment for everyone.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 animate-fade-in-up animation-delay-300">
                         {user ? (

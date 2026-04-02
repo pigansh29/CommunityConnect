@@ -1,8 +1,8 @@
-# CampusConnect 🛡️
+# CommunityConnect 🛡️
 
-![CampusConnect Banner](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge) ![MERN Stack](https://img.shields.io/badge/Stack-MERN-blue?style=for-the-badge&logo=mongodb) ![React-Leaflet](https://img.shields.io/badge/Maps-React%20Leaflet-11999e?style=for-the-badge&logo=leaflet)
+![CommunityConnect Banner](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge) ![MERN Stack](https://img.shields.io/badge/Stack-MERN-blue?style=for-the-badge&logo=mongodb) ![React-Leaflet](https://img.shields.io/badge/Maps-React%20Leaflet-11999e?style=for-the-badge&logo=leaflet)
 
-**CampusConnect** (formerly CommunityConnect) is a comprehensive, real-time campus safety monitoring and incident reporting web application built as a final-year BTech academic project. It empowers students to safely and anonymously report incidents while providing administrators with a powerful command center for tracking, analyzing, and resolving community issues.
+**CommunityConnect** is a comprehensive, real-time campus safety monitoring and incident reporting web application built as a final-year BTech academic project. It empowers students to safely and anonymously report incidents while providing administrators with a powerful command center for tracking, analyzing, and resolving community issues.
 
 ## 🌟 Key Features
 
@@ -44,8 +44,8 @@ Make sure you have [Node.js](https://nodejs.org/) and [MongoDB](https://www.mong
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/CampusConnect.git
-   cd CampusConnect
+   git clone https://github.com/your-username/CommunityConnect.git
+   cd CommunityConnect
    ```
 
 2. **Install Backend Dependencies:**
