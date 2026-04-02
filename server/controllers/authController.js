@@ -41,7 +41,7 @@ exports.registerUser = async (req, res) => {
                 await user.save();
 
                 try {
-                    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+                    if (process.env.EMAIL_USER && (process.env.BREVO_API_KEY || process.env.EMAIL_PASS)) {
                         const sendEmail = require('../utils/sendEmail');
                         // Send email asynchronously
                         sendEmail({
@@ -85,7 +85,7 @@ exports.registerUser = async (req, res) => {
         await user.save();
 
         try {
-            if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+            if (process.env.EMAIL_USER && (process.env.BREVO_API_KEY || process.env.EMAIL_PASS)) {
                 const sendEmail = require('../utils/sendEmail');
                 // Send email asynchronously
                 sendEmail({
@@ -134,7 +134,7 @@ exports.loginUser = async (req, res) => {
                 await user.save();
 
                 try {
-                    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+                    if (process.env.EMAIL_USER && (process.env.BREVO_API_KEY || process.env.EMAIL_PASS)) {
                         const sendEmail = require('../utils/sendEmail');
                         // Send email asynchronously
                         sendEmail({
