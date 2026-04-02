@@ -86,11 +86,15 @@ exports.createComplaint = async (req, res) => {
 exports.getComplaints = async (req, res) => {
     try {
         const { role, _id } = req.user;
+        const { feed } = req.query;
 
         let query = {};
 
-        if (role === 'student') {
-            // Students see only their own complaints
+        if (feed === 'community') {
+            // Community hub should see all complaints for the map/alerts
+            query = {};
+        } else if (role === 'student') {
+            // Students see only their own complaints in their personal dashboard
             // Challenge: If anonymous, they are not linked by ID.
             // Option: Return complaints linked by ID. Anonymous ones might not be viewable 
             // in "My History" unless we store ID even for anonymous but hide it from admin?

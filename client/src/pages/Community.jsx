@@ -15,7 +15,7 @@ const Community = () => {
             try {
                 // In a real app, these would be separate endpoints. 
                 // Using a unique timestamp to fully guarantee Render proxy/browser refuses to cache this GET request
-                const res = await axios.get(`/api/complaints?t=${new Date().getTime()}`);
+                const res = await axios.get(`/api/complaints?feed=community&t=${new Date().getTime()}`);
 
                 // Filter for "severe" types for alerts
                 const severe = res.data.filter(c => ['Violence', 'Harassment', 'Theft'].includes(c.incidentType));
