@@ -61,6 +61,10 @@ if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../client/dist')));
 
     app.use((req, res) => {
+        // Prevent aggressive caching of the index.html file so new deployments work instantly built assets
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.sendFile(path.resolve(__dirname, '../client/dist/index.html'));
     });
 } else {
