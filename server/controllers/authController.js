@@ -43,19 +43,23 @@ exports.registerUser = async (req, res) => {
                 try {
                     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
                         const sendEmail = require('../utils/sendEmail');
-                        await sendEmail({
+                        // Send email asynchronously
+                        sendEmail({
                             email: user.email,
                             subject: 'Community Connect - Verification Code',
                             message: `Welcome back to Community Connect! Your email verification code is: ${otp}\nThis code will expire in 10 minutes.`
+                        }).then(() => {
+                            console.log(`[MAIL] Email sent to ${email}`);
+                        }).catch(err => {
+                            console.error('Email sending failed:', err);
                         });
-                        console.log(`[MAIL] Email sent to ${email}`);
                     } else {
                         console.log(`\n\n======================================`);
                         console.log(`[MAIL MOCK] OTP for ${email}: ${otp}\n(Add EMAIL_USER and EMAIL_PASS to .env to send real emails)`);
                         console.log(`======================================\n\n`);
                     }
                 } catch (err) {
-                    console.error('Email sending failed:', err);
+                    console.error('Error initiating email send:', err);
                 }
 
                 return res.status(200).json({
@@ -83,19 +87,23 @@ exports.registerUser = async (req, res) => {
         try {
             if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
                 const sendEmail = require('../utils/sendEmail');
-                await sendEmail({
+                // Send email asynchronously
+                sendEmail({
                     email: user.email,
                     subject: 'Community Connect - Verification Code',
                     message: `Welcome to Community Connect! Your email verification code is: ${otp}\nThis code will expire in 10 minutes.`
+                }).then(() => {
+                    console.log(`[MAIL] Email sent to ${email}`);
+                }).catch((err) => {
+                    console.error('Email sending failed:', err);
                 });
-                console.log(`[MAIL] Email sent to ${email}`);
             } else {
                 console.log(`\n\n======================================`);
                 console.log(`[MAIL MOCK] OTP for ${email}: ${otp}\n(Add EMAIL_USER and EMAIL_PASS to .env to send real emails)`);
                 console.log(`======================================\n\n`);
             }
         } catch (err) {
-            console.error('Email sending failed:', err);
+            console.error('Error initiating email send:', err);
         }
 
         res.status(201).json({
@@ -128,19 +136,23 @@ exports.loginUser = async (req, res) => {
                 try {
                     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
                         const sendEmail = require('../utils/sendEmail');
-                        await sendEmail({
+                        // Send email asynchronously
+                        sendEmail({
                             email: user.email,
                             subject: 'Community Connect - New Verification Code',
                             message: `Your new email verification code is: ${otp}\nThis code will expire in 10 minutes.`
+                        }).then(() => {
+                            console.log(`[MAIL] Resent email to ${email}`);
+                        }).catch((err) => {
+                            console.error('Email sending failed:', err);
                         });
-                        console.log(`[MAIL] Resent email to ${email}`);
                     } else {
                         console.log(`\n\n======================================`);
                         console.log(`[MAIL MOCK] Resent OTP for ${email}: ${otp}\n(Add EMAIL_USER and EMAIL_PASS to .env to send real emails)`);
                         console.log(`======================================\n\n`);
                     }
                 } catch (err) {
-                    console.error('Email sending failed:', err);
+                    console.error('Error initiating email send:', err);
                 }
 
                 return res.status(403).json({ 

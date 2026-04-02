@@ -67,7 +67,8 @@ export const AuthProvider = ({ children }) => {
             return { 
                 success: true, 
                 requiresVerification: res.data.requiresVerification, 
-                email: res.data.email 
+                email: res.data.email,
+                message: res.data.message
             };
         } catch (error) {
             return { success: false, message: error.response?.data?.message || 'Registration failed' };
