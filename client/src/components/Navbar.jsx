@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 const Navbar = () => {
     const { user, logout } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const location = useLocation();
 
@@ -50,20 +51,36 @@ const Navbar = () => {
                                         {user.role === 'admin' ? '⚡ Admin Panel' : '📊 My Dashboard'}
                                     </Link>
                                     
-                                    <div className="flex items-center gap-3 bg-slate-800/80 px-4 py-1.5 rounded-full border border-slate-700/50 shadow-inner">
-                                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">
-                                            {getInitials(user.name)}
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-bold text-white leading-tight">{user.name}</span>
-                                            <span className="text-[10px] text-blue-300 uppercase tracking-widest font-black leading-tight">{user.role}</span>
-                                        </div>
-                                    </div>
+                                    <div className="relative">
+                                        <button 
+                                            onClick={() => setIsProfileOpen(!isProfileOpen)} 
+                                            className="flex items-center gap-3 bg-slate-800/80 px-4 py-1.5 rounded-full border border-slate-700/50 shadow-inner hover:bg-slate-700/80 transition-colors focus:outline-none"
+                                        >
+                                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">
+                                                {getInitials(user.name)}
+                                            </div>
+                                            <div className="hidden lg:flex flex-col text-left">
+                                                <span className="text-sm font-bold text-white leading-tight">{user.name}</span>
+                                            </div>
+                                        </button>
 
-                                    <button onClick={logout} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 font-semibold border border-red-500/20 hover:border-red-500/40 hover:shadow-lg hover:shadow-red-500/20">
-                                        <LogOut size={16} />
-                                        <span>Logout</span>
-                                    </button>
+                                        {/* Dropdown Menu */}
+                                        {isProfileOpen && (
+                                            <div className="absolute right-0 mt-2 w-56 bg-slate-800/95 backdrop-blur-md border border-slate-700 rounded-xl shadow-2xl py-2 z-50 overflow-hidden transform origin-top-right transition-all animate-fade-in-down">
+                                                <div className="px-4 py-3 border-b border-slate-700/50 bg-slate-800/50 mb-1">
+                                                    <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                                                    <p className="text-xs text-slate-400 font-medium truncate mt-0.5">{user.email}</p>
+                                                    <p className="text-[10px] text-blue-400 uppercase tracking-widest font-black mt-2 inline-block bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{user.role}</p>
+                                                </div>
+                                                <div className="px-2">
+                                                    <button onClick={logout} className="w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-2 group">
+                                                        <LogOut size={16} className="group-hover:scale-110 transition-transform" />
+                                                        <span>Sign out</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-4 pl-4 border-l border-white/10">
@@ -98,6 +115,7 @@ const Navbar = () => {
                                 </div>
                                 <div className="ml-4">
                                     <div className="text-base font-bold text-white">{user.name}</div>
+                                    <div className="text-xs text-slate-400 font-medium">{user.email}</div>
                                     <div className="text-xs font-black text-blue-400 mt-1 uppercase tracking-wider">{user.role}</div>
                                 </div>
                             </div>

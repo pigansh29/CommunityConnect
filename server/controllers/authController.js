@@ -28,21 +28,42 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
         user = new User({
             name,
             email,
             password,
-            role: assignedRole, 
+            role: assignedRole,
+            verificationToken: otp,
+            verificationTokenExpires: otpExpires
         });
 
         await user.save();
 
+        try {
+            if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+                const sendEmail = require('../utils/sendEmail');
+                await sendEmail({
+                    email: user.email,
+                    subject: 'Community Connect - Verification Code',
+                    message: `Welcome to Community Connect! Your email verification code is: ${otp}\nThis code will expire in 10 minutes.`
+                });
+                console.log(`[MAIL] Email sent to ${email}`);
+            } else {
+                console.log(`\n\n======================================`);
+                console.log(`[MAIL MOCK] OTP for ${email}: ${otp}\n(Add EMAIL_USER and EMAIL_PASS to .env to send real emails)`);
+                console.log(`======================================\n\n`);
+            }
+        } catch (err) {
+            console.error('Email sending failed:', err);
+        }
+
         res.status(201).json({
-            _id: user._id,
-            name: user.name,
+            message: 'Registration successful! Please verify your email.',
             email: user.email,
-            role: user.role,
-            token: generateToken(user._id),
+            requiresVerification: true
         });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -59,6 +80,38 @@ exports.loginUser = async (req, res) => {
         const user = await User.findOne({ email });
 
         if (user && (await user.comparePassword(password))) {
+            if (!user.isVerified) {
+                // Generate a new OTP if trying to login without verification
+                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                user.verificationToken = otp;
+                user.verificationTokenExpires = new Date(Date.now() + 10 * 60 * 1000);
+                await user.save();
+
+                try {
+                    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+                        const sendEmail = require('../utils/sendEmail');
+                        await sendEmail({
+                            email: user.email,
+                            subject: 'Community Connect - New Verification Code',
+                            message: `Your new email verification code is: ${otp}\nThis code will expire in 10 minutes.`
+                        });
+                        console.log(`[MAIL] Resent email to ${email}`);
+                    } else {
+                        console.log(`\n\n======================================`);
+                        console.log(`[MAIL MOCK] Resent OTP for ${email}: ${otp}\n(Add EMAIL_USER and EMAIL_PASS to .env to send real emails)`);
+                        console.log(`======================================\n\n`);
+                    }
+                } catch (err) {
+                    console.error('Email sending failed:', err);
+                }
+
+                return res.status(403).json({ 
+                    message: 'Please verify your email address. A new code has been sent.',
+                    requiresVerification: true,
+                    email: user.email 
+                });
+            }
+
             res.json({
                 _id: user._id,
                 name: user.name,
@@ -69,6 +122,40 @@ exports.loginUser = async (req, res) => {
         } else {
             res.status(401).json({ message: 'Invalid email or password' });
         }
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+// @desc    Verify user email with OTP
+// @route   POST /api/auth/verify
+// @access  Public
+exports.verifyEmail = async (req, res) => {
+    const { email, otp } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        if (user.isVerified) {
+            return res.status(400).json({ message: 'User is already verified' });
+        }
+
+        if (user.verificationToken !== otp || user.verificationTokenExpires < Date.now()) {
+            return res.status(400).json({ message: 'Invalid or expired verification code' });
+        }
+
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpires = undefined;
+        await user.save();
+
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user._id),
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }

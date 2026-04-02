@@ -45,6 +45,14 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
             return { success: true };
         } catch (error) {
+            if (error.response?.data?.requiresVerification) {
+                return { 
+                    success: false, 
+                    requiresVerification: true, 
+                    email: error.response.data.email, 
+                    message: error.response.data.message 
+                };
+            }
             return {
                 success: false,
                 message: error.response?.data?.message || 'Login failed'
@@ -53,9 +61,22 @@ export const AuthProvider = ({ children }) => {
     };
 
     const register = async (name, email, password, role) => {
-        setLoading(true);
         try {
             const res = await axios.post('/api/auth/register', { name, email, password, role });
+            // Returns requiresVerification instead of token
+            return { 
+                success: true, 
+                requiresVerification: res.data.requiresVerification, 
+                email: res.data.email 
+            };
+        } catch (error) {
+            return { success: false, message: error.response?.data?.message || 'Registration failed' };
+        }
+    };
+
+    const verifyEmail = async (email, otp) => {
+        try {
+            const res = await axios.post('/api/auth/verify', { email, otp });
             const { token, ...userData } = res.data;
 
             localStorage.setItem('token', token);
@@ -65,9 +86,7 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
             return { success: true };
         } catch (error) {
-            return { success: false, message: error.response?.data?.message || 'Registration failed' };
-        } finally {
-            setLoading(false);
+            return { success: false, message: error.response?.data?.message || 'Verification failed' };
         }
     };
 
@@ -79,7 +98,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, register, verifyEmail, logout, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );
