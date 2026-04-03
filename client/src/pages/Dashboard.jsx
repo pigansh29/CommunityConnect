@@ -55,7 +55,7 @@ const StudentDashboard = () => {
                     <div className="relative z-10">
                         <h2 className="text-2xl font-bold mb-2">Welcome to your Safety Center</h2>
                         <p className="text-indigo-200 max-w-2xl leading-relaxed">
-                            Here you can track the status of the incidents you've reported. Note that complaints submitted anonymously are strictly untracked to protect your privacy. Thank you for making our campus safer.
+                            Here you can track the status of the incidents you've reported. <strong>New:</strong> Your anonymous complaints are now privately trackable in your personal history, but remain hidden from admins and other users.
                         </p>
                     </div>
                 </div>
@@ -112,6 +112,11 @@ const StudentDashboard = () => {
                                                         {complaint.status === 'Resolved' && <CheckCircle2 size={14} />}
                                                         {complaint.status}
                                                     </span>
+                                                    {complaint.isAnonymous && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">
+                                                            <Shield size={10} /> Anonymous
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <h4 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors mb-2">
                                                     {complaint.title}

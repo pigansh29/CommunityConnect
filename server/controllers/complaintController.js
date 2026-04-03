@@ -1,5 +1,7 @@
 const Complaint = require('../models/Complaint');
+const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const { getRealWordRatio } = require('../utils/dictionaryCheck');
 
 // @desc    Submit a new complaint
 // @route   POST /api/complaints
@@ -25,10 +27,26 @@ exports.createComplaint = async (req, res) => {
             });
         }
 
-        // --- 2. Duplicate Complaint Detection ---
+        // --- 1b. Gibberish / Nonsense Detection (Dictionary Check) ---
+        // We cross-reference every meaningful word (3+ chars) against a 274,000-word
+        // English dictionary. If less than 35% of words are real English words,
+        // the description is tagged as meaningless and rejected.
+        // Threshold is lenient (35%) to allow technical terms, proper nouns, place names, etc.
+        const descWordsLower = descWords.map(w => w.toLowerCase().replace(/[^a-z]/g, ''));
+        const realWordRatio = getRealWordRatio(descWordsLower);
+        if (realWordRatio < 0.35) {
+            return res.status(400).json({
+                message: 'Your complaint description appears to contain meaningless or random text. Please describe the incident clearly in plain English so we can help you.'
+            });
+        }
+
+        // --- 2. Duplicate Complaint Detection (same user only) ---
+        // Only block the same user from submitting the same thing twice.
+        // Different users should be allowed to independently report the same incident.
         if (location && location.areaName) {
             const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
             const recentComplaints = await Complaint.find({
+                user: currentUser._id, // Scope to the SAME user only
                 'location.areaName': location.areaName,
                 incidentType,
                 createdAt: { $gte: twentyFourHoursAgo }
@@ -38,10 +56,10 @@ exports.createComplaint = async (req, res) => {
             for (let rc of recentComplaints) {
                 const oldWords = new Set(rc.title.toLowerCase().split(/\s+/));
                 const intersection = new Set([...newWords].filter(x => oldWords.has(x)));
-                // If more than 50% of the words match, consider it a duplicate
+                // If more than 50% of the words match, consider it a duplicate from the same user
                 if (intersection.size >= (newWords.size * 0.5) && newWords.size > 0) {
                     return res.status(409).json({ 
-                        message: 'A similar complaint has already been registered in this area recently. Our team is already looking into it.' 
+                        message: 'You have already submitted a similar complaint for this area recently. Our team is already looking into it.' 
                     });
                 }
             }
@@ -54,19 +72,38 @@ exports.createComplaint = async (req, res) => {
             location,
             isAnonymous,
             media,
+            user: currentUser._id, // Link user ID even if anonymous to allow tracking
         };
 
         if (isAnonymous) {
-            // Hash the email for internal tracking/verification
+            // --- 3. Anonymous Complaint Rate Limit (1 every 24h) ---
+            if (currentUser.lastAnonymousComplaintAt) {
+                const lastSubAt = new Date(currentUser.lastAnonymousComplaintAt);
+                const diff = Date.now() - lastSubAt.getTime();
+                const twentyFourHours = 24 * 60 * 60 * 1000;
+
+                if (diff < twentyFourHours) {
+                    const hoursLeft = Math.ceil((twentyFourHours - diff) / (60 * 60 * 1000));
+                    return res.status(429).json({ 
+                        message: `To ensure platform reliability, anonymous complaints are limited to one per 24 hours. Please try again in about ${hoursLeft} hours.` 
+                    });
+                }
+            }
+
+            // Hash the email for internal tracking/verification (optional but kept for internal metrics)
             const salt = await bcrypt.genSalt(10);
             const emailHash = await bcrypt.hash(currentUser.email, salt);
             complaintData.reporterHash = emailHash;
-            // Do NOT link the user ID directly if anonymous
-        } else {
-            complaintData.user = currentUser._id;
         }
 
         const complaint = await Complaint.create(complaintData);
+
+        if (isAnonymous) {
+            // Update the user's last anonymous complaint timestamp
+            await User.findByIdAndUpdate(currentUser._id, {
+                lastAnonymousComplaintAt: new Date()
+            });
+        }
 
         // Emit the newly created complaint to all connected websocket clients!
         // IMPORTANT: Must use .toObject() so Socket.IO doesn't crash parsing a circular Mongoose Document
@@ -113,12 +150,27 @@ exports.getComplaints = async (req, res) => {
             .populate('user', 'name email')
             .sort({ createdAt: -1 });
 
+        // --- Sanitization Logic for Anonymous Complaints ---
+        // We want users to see their own anonymous complaints, but hide identity from everyone else
+        const sanitizedComplaints = complaints.map(complaint => {
+            const cObj = complaint.toObject();
+            
+            if (cObj.isAnonymous) {
+                const isOwner = cObj.user && String(cObj.user._id) === String(_id);
+                // If it's anonymous and the current user is NOT the owner, strip user info
+                if (!isOwner) {
+                    delete cObj.user;
+                }
+            }
+            return cObj;
+        });
+
         // Force browsers and proxies (like Render) to never cache this API response
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
 
-        res.json(complaints);
+        res.json(sanitizedComplaints);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }

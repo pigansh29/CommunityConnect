@@ -77,7 +77,58 @@ const ReportIncident = () => {
     // Map Search State
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [isGeolocating, setIsGeolocating] = useState(false);
     const mapRef = useRef(null);
+
+    // GPS Auto-Location
+    const handleUseMyLocation = () => {
+        if (!navigator.geolocation) {
+            setError('Geolocation is not supported by your browser.');
+            return;
+        }
+        setIsGeolocating(true);
+        setError('');
+        setIsFetchingAddress(true);
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                // Fly map to user's position
+                if (mapRef.current) {
+                    mapRef.current.flyTo([lat, lng], 17);
+                }
+                // Reverse geocode to get area name
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                        { headers: { 'Accept-Language': 'en' } }
+                    );
+                    const data = await response.json();
+                    const address = data.address;
+                    const areaName = address
+                        ? (address.road || address.suburb || address.neighbourhood || address.city_district || address.city || address.town || address.village || 'Your Location')
+                        : 'Your Location';
+                    setLocation({ lat, lng, areaName });
+                } catch {
+                    setLocation({ lat, lng, areaName: 'Your Location' });
+                } finally {
+                    setIsGeolocating(false);
+                    setIsFetchingAddress(false);
+                }
+            },
+            (err) => {
+                setIsGeolocating(false);
+                setIsFetchingAddress(false);
+                if (err.code === err.PERMISSION_DENIED) {
+                    setError('Location access denied. Please allow location permission in your browser and try again.');
+                } else {
+                    setError('Unable to retrieve your location. Please try again or click the map manually.');
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    };
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -85,35 +136,53 @@ const ReportIncident = () => {
 
         setIsSearching(true);
         setError('');
+        setSearchResults([]);
 
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}`);
+            // Added countrycodes=in to bias results toward India
+            // Added limit=5 to return multiple candidates the user can pick from
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}&countrycodes=in&limit=5&addressdetails=1`,
+                { headers: { 'Accept-Language': 'en' } }
+            );
             const data = await response.json();
 
             if (data && data.length > 0) {
-                const result = data[0];
-                const lat = parseFloat(result.lat);
-                const lng = parseFloat(result.lon);
-
-                // Update location state with the found location
-                setLocation({
-                    lat,
-                    lng,
-                    areaName: result.display_name
-                });
-
-                // Fly the map to the new coordinates if the map instance is available
-                if (mapRef.current) {
-                    mapRef.current.flyTo([lat, lng], 16); // 16 is a good zoom level for street/neighborhood
+                if (data.length === 1) {
+                    // Only one result — select it immediately
+                    selectSearchResult(data[0]);
+                } else {
+                    // Multiple results — show a dropdown so the user can pick
+                    setSearchResults(data);
                 }
             } else {
-                setError('Location not found. Please try a different search term.');
+                // Fallback: retry without country restriction in case it's a very specific name
+                const fallback = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}&limit=5`,
+                    { headers: { 'Accept-Language': 'en' } }
+                );
+                const fallbackData = await fallback.json();
+                if (fallbackData && fallbackData.length > 0) {
+                    setSearchResults(fallbackData);
+                } else {
+                    setError('Location not found. Try a more specific name, or click directly on the map.');
+                }
             }
         } catch (err) {
             console.error('Error searching location:', err);
             setError('Failed to search location. Please try again.');
         } finally {
             setIsSearching(false);
+        }
+    };
+
+    const selectSearchResult = (result) => {
+        const lat = parseFloat(result.lat);
+        const lng = parseFloat(result.lon);
+        setLocation({ lat, lng, areaName: result.display_name });
+        setSearchResults([]); // Close the dropdown
+        if (mapRef.current) {
+            mapRef.current.flyTo([lat, lng], 16);
         }
     };
 
@@ -253,23 +322,66 @@ const ReportIncident = () => {
                 {/* Map Section */}
                 <div className="flex flex-col gap-3 min-h-0 bg-white p-4 rounded-lg shadow-md border border-gray-100">
                     {/* Location Search Bar */}
-                    <form onSubmit={handleSearch} className="flex gap-2 shrink-0">
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search for a location (e.g., Library, Main Gate)"
-                            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                        />
-                        <button
-                            type="submit"
-                            disabled={isSearching}
-                            className={`px-4 py-1.5 rounded-md shadow-sm text-sm font-medium text-white ${isSearching ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                    <div className="relative shrink-0">
+                        <form onSubmit={handleSearch} className="flex gap-2">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => { setSearchQuery(e.target.value); setSearchResults([]); }}
+                                placeholder="Search college, area, landmark..."
+                                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            />
+                            <button
+                                type="submit"
+                                disabled={isSearching}
+                                className={`px-4 py-1.5 rounded-md shadow-sm text-sm font-medium text-white ${
+                                    isSearching ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
                                 } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition`}
-                        >
-                            {isSearching ? 'Search' : 'Search Map'}
-                        </button>
-                    </form>
+                            >
+                                {isSearching ? 'Searching...' : 'Search Map'}
+                            </button>
+                            {/* GPS Auto-Location Button */}
+                            <button
+                                type="button"
+                                onClick={handleUseMyLocation}
+                                disabled={isGeolocating}
+                                title="Use my current GPS location"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md shadow-sm text-sm font-medium border transition ${
+                                    isGeolocating
+                                        ? 'bg-green-50 text-green-400 border-green-200 cursor-wait'
+                                        : 'bg-white text-green-600 border-green-300 hover:bg-green-50 hover:border-green-400'
+                                }`}
+                            >
+                                {isGeolocating ? (
+                                    <svg className="animate-spin h-4 w-4 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+                                    </svg>
+                                )}
+                                {isGeolocating ? 'Locating...' : 'My Location'}
+                            </button>
+                        </form>
+                        {/* Search Results Dropdown */}
+                        {searchResults.length > 0 && (
+                            <ul className="absolute top-full left-0 right-0 z-[2000] bg-white border border-gray-200 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
+                                {searchResults.map((result, idx) => (
+                                    <li
+                                        key={idx}
+                                        onClick={() => selectSearchResult(result)}
+                                        className="px-3 py-2 text-xs text-gray-700 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                                    >
+                                        <span className="font-semibold text-gray-900">{result.name || result.display_name.split(',')[0]}</span>
+                                        <span className="text-gray-400 ml-1 truncate block">{result.display_name}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
 
                     {/* Adding relative z-0 fixes the navbar overlapping issue */}
                     <div className="flex-1 bg-gray-200 rounded-lg overflow-hidden shadow-inner relative border border-gray-300 z-0 min-h-0">

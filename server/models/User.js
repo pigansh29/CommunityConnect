@@ -35,6 +35,9 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    lastAnonymousComplaintAt: {
+        type: Date,
+    },
 });
 
 // Password hashing middleware
