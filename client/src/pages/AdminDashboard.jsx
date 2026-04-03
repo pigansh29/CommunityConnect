@@ -79,6 +79,24 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleNoteUpdate = async () => {
+        if (!selectedComplaint) return;
+        try {
+            await axios.patch(`/api/complaints/${selectedComplaint._id}/status`, {
+                resolutionDetails: resolutionNote
+            });
+
+            // Update local state
+            setComplaints(prev => prev.map(c => c._id === selectedComplaint._id ? { ...c, resolutionDetails: resolutionNote } : c));
+            
+            // Just show a subtle success without closing modal so admin can keep working
+            alert(`Note updated successfully!`);
+        } catch (error) {
+            console.error("Note update failed", error);
+            alert("Failed to update note.");
+        }
+    };
+
     const openModal = (complaint) => {
         setSelectedComplaint(complaint);
         setResolutionNote(complaint.resolutionDetails || '');
@@ -389,7 +407,15 @@ const AdminDashboard = () => {
 
                             {/* Action Section */}
                             <div>
-                                <h4 className="font-semibold text-gray-700 mb-3">Admin Action & Resolution</h4>
+                                <div className="flex justify-between items-center mb-2">
+                                    <h4 className="font-semibold text-gray-700">Admin Action & Resolution</h4>
+                                    <button 
+                                        onClick={handleNoteUpdate}
+                                        className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 text-xs font-semibold rounded-md shadow-sm transition"
+                                    >
+                                        Save Note Only
+                                    </button>
+                                </div>
                                 <textarea
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                                     rows="3"

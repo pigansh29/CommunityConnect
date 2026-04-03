@@ -190,8 +190,10 @@ exports.updateComplaintStatus = async (req, res) => {
             return res.status(404).json({ message: 'Complaint not found' });
         }
 
-        complaint.status = status;
-        if (resolutionDetails) {
+        if (status) {
+            complaint.status = status;
+        }
+        if (resolutionDetails !== undefined) {
             complaint.resolutionDetails = resolutionDetails;
         }
 

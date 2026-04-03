@@ -21,7 +21,7 @@ const LocationMarker = ({ setLocation, isFetchingAddress }) => {
             try {
                 isFetchingAddress(true);
                 // Call OpenStreetMap Nominatim API for reverse geocoding using fetch to avoid axios JWT headers
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&email=communityconnect@example.com`);
                 const data = await response.json();
 
                 // Extract best available name
@@ -104,7 +104,7 @@ const ReportIncident = () => {
                 // Reverse geocode to get area name
                 try {
                     const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&email=communityconnect@example.com`,
                         { headers: { 'Accept-Language': 'en' } }
                     );
                     const data = await response.json();
@@ -120,18 +120,43 @@ const ReportIncident = () => {
                     setIsFetchingAddress(false);
                 }
             },
-            (err) => {
+            async (err) => {
                 if (resolved) return;
                 resolved = true;
+
+                // Fallback to IP-based location if hardware GPS gives an error
+                try {
+                    const ipRes = await fetch('https://ipapi.co/json/');
+                    const ipData = await ipRes.json();
+                    if (ipData && ipData.latitude && ipData.longitude) {
+                        const lat = ipData.latitude;
+                        const lng = ipData.longitude;
+                        if (mapRef.current) {
+                            mapRef.current.flyTo([lat, lng], 16);
+                        }
+                        const areaName = ipData.city ? `${ipData.city}, ${ipData.region}` : 'Approximate Location (IP)';
+                        setLocation({ lat, lng, areaName });
+                        setIsGeolocating(false);
+                        setIsFetchingAddress(false);
+                        return; // Successfully used fallback!
+                    }
+                } catch (fallbackError) {
+                    console.error('IP Fallback failed', fallbackError);
+                }
+
                 setIsGeolocating(false);
                 setIsFetchingAddress(false);
-                if (err.code === err.PERMISSION_DENIED) {
+                if (err.code === 1) { // PERMISSION_DENIED
                     setError('Location access denied. Please allow location permission in your browser and try again.');
+                } else if (err.code === 2) { // POSITION_UNAVAILABLE
+                    setError('Location information is unavailable. Ensure your device location services are enabled, or click the map manually.');
+                } else if (err.code === 3) { // TIMEOUT
+                    setError('Location request timed out. Please try again or click the map manually.');
                 } else {
                     setError('Unable to retrieve your location. Please try again or click the map manually.');
                 }
             },
-            { enableHighAccuracy: false, maximumAge: 10000, timeout: 15000 }
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
         );
     };
 
@@ -147,7 +172,7 @@ const ReportIncident = () => {
             // Added countrycodes=in to bias results toward India
             // Added limit=5 to return multiple candidates the user can pick from
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}&countrycodes=in&limit=5&addressdetails=1`,
+                `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}&countrycodes=in&limit=5&addressdetails=1&email=communityconnect@example.com`,
                 { headers: { 'Accept-Language': 'en' } }
             );
             const data = await response.json();
@@ -163,7 +188,7 @@ const ReportIncident = () => {
             } else {
                 // Fallback: retry without country restriction in case it's a very specific name
                 const fallback = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}&limit=5`,
+                    `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}&limit=5&email=communityconnect@example.com`,
                     { headers: { 'Accept-Language': 'en' } }
                 );
                 const fallbackData = await fallback.json();
