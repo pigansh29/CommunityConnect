@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ReportIncident from './pages/ReportIncident';
 import Community from './pages/Community';
+import ForgotPassword from './pages/ForgotPassword';
 import PrivateRoute from './components/PrivateRoute';
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -49,7 +50,16 @@ function App() {
               }
             />
 
-            <Route path="/community" element={<Community />} />
+            <Route
+              path="/community"
+              element={
+                <PrivateRoute>
+                  <Community />
+                </PrivateRoute>
+              }
+            />
+            
+            <Route path="/forgot-password" element={<ForgotPassword />} />
           </Routes>
         </div>
       </AuthProvider>

@@ -91,6 +91,24 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const sendPasswordResetEmail = async (email) => {
+        try {
+            const res = await axios.post('/api/auth/forgot-password', { email });
+            return { success: true, message: res.data.message };
+        } catch (error) {
+            return { success: false, message: error.response?.data?.message || 'Failed to send reset email' };
+        }
+    };
+
+    const resetPassword = async (email, otp, newPassword) => {
+        try {
+            const res = await axios.post('/api/auth/reset-password', { email, otp, newPassword });
+            return { success: true, message: res.data.message };
+        } catch (error) {
+            return { success: false, message: error.response?.data?.message || 'Password reset failed' };
+        }
+    };
+
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -99,7 +117,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, verifyEmail, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, register, verifyEmail, sendPasswordResetEmail, resetPassword, logout, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );

@@ -210,3 +210,73 @@ exports.verifyEmail = async (req, res) => {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
+
+// @desc    Initiate forgot password flow
+// @route   POST /api/auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'No user found with this email' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.resetPasswordToken = otp;
+        user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        await user.save();
+
+        try {
+            if (process.env.EMAIL_USER && (process.env.BREVO_API_KEY || process.env.EMAIL_PASS)) {
+                const sendEmail = require('../utils/sendEmail');
+                sendEmail({
+                    email: user.email,
+                    subject: 'Community Connect - Password Reset',
+                    message: `You requested a password reset. Your verification code is: ${otp}\nThis code will expire in 10 minutes. If you did not request this, please ignore this email.`
+                }).then(() => {
+                    console.log(`[MAIL] Password reset email sent to ${email}`);
+                }).catch((err) => {
+                    console.error('Email sending failed:', err);
+                });
+            } else {
+                console.log(`\n\n======================================`);
+                console.log(`[MAIL MOCK] Password Reset OTP for ${email}: ${otp}\n(Add EMAIL_USER and EMAIL_PASS to send real emails)`);
+                console.log(`======================================\n\n`);
+            }
+        } catch (err) {
+            console.error('Error initiating email send:', err);
+        }
+
+        res.json({ message: 'Password reset code sent to email' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+// @desc    Reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+exports.resetPassword = async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.resetPasswordToken !== otp || user.resetPasswordExpires < Date.now()) {
+            return res.status(400).json({ message: 'Invalid or expired reset code' });
+        }
+
+        // newPassword will be dynamically hashed by the pre-save hook in User model
+        user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.json({ message: 'Password has been reset successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
