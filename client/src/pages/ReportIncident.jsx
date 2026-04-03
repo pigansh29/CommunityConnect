@@ -294,6 +294,22 @@ const ReportIncident = () => {
                             />
                         </div>
 
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Exact Location Name <span className="text-xs text-gray-400 font-normal">(Select on map first)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={location ? location.areaName : ''}
+                                onChange={(e) => {
+                                    if (location) setLocation(prev => ({ ...prev, areaName: e.target.value }));
+                                }}
+                                disabled={!location}
+                                placeholder={location ? "Edit location name..." : "Please select a location on the map on the right"}
+                                className="block w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+                            />
+                        </div>
+
                         <div className="flex-1 flex flex-col">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Evidence Upload (Optional)</label>
                             <div className="flex-1 flex flex-col justify-center px-6 py-3 border-2 border-gray-300 border-dashed rounded-md hover:border-blue-500 transition-colors bg-gray-50 focus-within:border-blue-500 min-h-[100px]">
