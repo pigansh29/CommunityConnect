@@ -90,8 +90,11 @@ const ReportIncident = () => {
         setIsGeolocating(true);
         setError('');
         setIsFetchingAddress(true);
+        let resolved = false;
         navigator.geolocation.getCurrentPosition(
             async (pos) => {
+                if (resolved) return;
+                resolved = true;
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
                 // Fly map to user's position
@@ -118,6 +121,8 @@ const ReportIncident = () => {
                 }
             },
             (err) => {
+                if (resolved) return;
+                resolved = true;
                 setIsGeolocating(false);
                 setIsFetchingAddress(false);
                 if (err.code === err.PERMISSION_DENIED) {
@@ -126,7 +131,7 @@ const ReportIncident = () => {
                     setError('Unable to retrieve your location. Please try again or click the map manually.');
                 }
             },
-            { enableHighAccuracy: true, timeout: 10000 }
+            { enableHighAccuracy: false, maximumAge: 10000, timeout: 15000 }
         );
     };
 

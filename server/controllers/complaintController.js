@@ -2,6 +2,7 @@ const Complaint = require('../models/Complaint');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { getRealWordRatio } = require('../utils/dictionaryCheck');
+const sendEmail = require('../utils/sendEmail');
 
 // @desc    Submit a new complaint
 // @route   POST /api/complaints
@@ -195,6 +196,23 @@ exports.updateComplaintStatus = async (req, res) => {
         }
 
         await complaint.save();
+
+        const user = await User.findById(complaint.user);
+        if (user && user.email) {
+            try {
+                let emailMessage = `Your complaint titled "${complaint.title}" has been updated.\n\nNew Status: ${status}`;
+                if (resolutionDetails) {
+                    emailMessage += `\nAdmin Comment / Resolution: ${resolutionDetails}`;
+                }
+                await sendEmail({
+                    email: user.email,
+                    subject: 'Complaint Status Update - Community Connect',
+                    message: emailMessage
+                });
+            } catch (emailError) {
+                console.error("Failed to send update email:", emailError);
+            }
+        }
 
         res.json(complaint);
     } catch (error) {

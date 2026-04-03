@@ -28,7 +28,7 @@ const englishWords = new Set(
  */
 function getRealWordRatio(words) {
     const meaningful = words.filter(w => w.length >= 3);
-    if (meaningful.length === 0) return 1; // Nothing to check
+    if (meaningful.length === 0) return 0; // Nothing to check, means words are too short or just gibberish, failing the ratio.
 
     const realCount = meaningful.filter(w => englishWords.has(w.toLowerCase())).length;
     return realCount / meaningful.length;

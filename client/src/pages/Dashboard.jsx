@@ -196,6 +196,13 @@ const StudentDashboard = () => {
                                     </div>
                                 </div>
                                 
+                                {selectedComplaint.resolutionDetails && (
+                                    <div className="mt-6 p-4 rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-900">
+                                        <p className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">Admin Resolution / Comment</p>
+                                        <p className="text-sm font-medium bg-white p-3 rounded border border-indigo-100 shadow-sm mt-1">{selectedComplaint.resolutionDetails}</p>
+                                    </div>
+                                )}
+                                
                                 {selectedComplaint.media && selectedComplaint.media.length > 0 && selectedComplaint.media[0] !== "" && (
                                     <div className="mt-6 border-t border-slate-100 pt-6">
                                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Supporting Evidence</p>
