@@ -40,7 +40,7 @@ app.use(
                 scriptSrc: ["'self'", "'unsafe-inline'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https://*.openstreetmap.org", "https://*.basemaps.cartocdn.com", "https://unpkg.com"],
-                connectSrc: ["'self'", "ws:", "wss:", "https://*.openstreetmap.org", "https://*.basemaps.cartocdn.com", "https://nominatim.openstreetmap.org"],
+                connectSrc: ["'self'", "ws:", "wss:", "https://*.openstreetmap.org", "https://*.basemaps.cartocdn.com", "https://nominatim.openstreetmap.org", "https://ipapi.co", "https://ipinfo.io"],
             },
         },
         crossOriginEmbedderPolicy: false,

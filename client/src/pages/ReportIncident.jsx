@@ -126,11 +126,12 @@ const ReportIncident = () => {
 
                 // Fallback to IP-based location if hardware GPS gives an error
                 try {
-                    const ipRes = await fetch('https://ipapi.co/json/');
+                    const ipRes = await fetch('https://ipinfo.io/json');
                     const ipData = await ipRes.json();
-                    if (ipData && ipData.latitude && ipData.longitude) {
-                        const lat = ipData.latitude;
-                        const lng = ipData.longitude;
+                    if (ipData && ipData.loc) {
+                        const [latStr, lngStr] = ipData.loc.split(',');
+                        const lat = parseFloat(latStr);
+                        const lng = parseFloat(lngStr);
                         if (mapRef.current) {
                             mapRef.current.flyTo([lat, lng], 16);
                         }
