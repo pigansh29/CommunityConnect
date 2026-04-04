@@ -25,7 +25,7 @@ const complaintSchema = new mongoose.Schema({
     }],
     status: {
         type: String,
-        enum: ['Submitted', 'Under Review', 'Action Taken', 'Resolved'],
+        enum: ['Submitted', 'Under Review', 'Action Taken', 'Resolved', 'Rejected'],
         default: 'Submitted',
     },
     isAnonymous: {

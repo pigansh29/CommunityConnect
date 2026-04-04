@@ -129,8 +129,8 @@ exports.getComplaints = async (req, res) => {
         let query = {};
 
         if (feed === 'community') {
-            // Community hub should see all complaints for the map/alerts
-            query = {};
+            // Community hub should see all complaints for the map/alerts except for rejected ones
+            query = { status: { $ne: 'Rejected' } };
         } else if (role === 'student') {
             // Students see only their own complaints in their personal dashboard
             // Challenge: If anonymous, they are not linked by ID.
@@ -214,6 +214,10 @@ exports.updateComplaintStatus = async (req, res) => {
             } catch (emailError) {
                 console.error("Failed to send update email:", emailError);
             }
+        }
+
+        if (req.io) {
+            req.io.emit('statusUpdated', complaint.toObject());
         }
 
         res.json(complaint);

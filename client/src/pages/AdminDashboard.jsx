@@ -271,6 +271,7 @@ const AdminDashboard = () => {
                             <option value="Submitted">Pending</option>
                             <option value="Under Review">Under Review</option>
                             <option value="Resolved">Resolved</option>
+                            <option value="Rejected">Rejected</option>
                         </select>
                     </div>
                 </div>
@@ -308,7 +309,8 @@ const AdminDashboard = () => {
                                         <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider border
                                             ${complaint.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                                 complaint.status === 'Action Taken' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                    complaint.status === 'Submitted' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                    complaint.status === 'Rejected' ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' :
+                                                        complaint.status === 'Submitted' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                             }`}>
                                             {complaint.status}
                                         </span>
@@ -440,6 +442,14 @@ const AdminDashboard = () => {
                                         `}
                                     >
                                         Mark Action Taken
+                                    </button>
+                                    <button
+                                        onClick={() => handleStatusUpdate('Rejected')}
+                                        className={`px-4 py-2 rounded-md transition text-sm font-medium
+                                            ${selectedComplaint.status === 'Rejected' ? 'bg-gray-200 text-gray-800 border border-gray-300' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}
+                                        `}
+                                    >
+                                        Reject Complaint
                                     </button>
                                     <button
                                         onClick={() => handleStatusUpdate('Resolved')}

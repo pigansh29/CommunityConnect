@@ -57,6 +57,15 @@ const Community = () => {
             }
         });
 
+        // Listen for status updates to handle rejections instantly
+        socket.on('statusUpdated', (updatedIncident) => {
+            console.log("Status updated via socket:", updatedIncident);
+            if (updatedIncident.status === 'Rejected') {
+                setBlackSpots(prev => prev.filter(c => c._id !== updatedIncident._id));
+                setAlerts(prev => prev.filter(c => c._id !== updatedIncident._id));
+            }
+        });
+
         // Cleanup the socket connection when the user leaves the page to prevent memory leaks
         return () => {
             socket.disconnect();
